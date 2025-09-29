@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Berth Allocation & Scheduling Visualizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>Berth Allocation & Scheduling Visualizer</h1>
+
+  <div class="container">
+    <!-- Left Panel -->
+    <div class="port-panel">
+      <div class="toolbar">
+        <!-- Left side -->
+        <div class="toolbar-left">
+          <select id="algSelect">
+            <option >---Select Algorithm---</option>
+            <option value="exact">Exact Model</option>
+            <option value="nn">Nearest Neighbour</option>
+            <option value="insertion">Insertion</option>
+            <option value="qd_insertion">Q&D-Insertion</option>
+            <option value="csa">CSA</option>
+            <option value="ga">GA</option>
+            <option value="alns">ALNS</option>
+          </select>
+          <button id="runBtn">Display</button>
+          <button id="addVesselBtn"> Add Vessel</button>
+        </div>
+
+        <!-- Right side -->
+        <div class="toolbar-right">
+          <select id="scenarioSelect">
+            <option >---Select Scenario---</option>
+            <option value="20-10-168-1">D20-10</option>
+            <option value="25-10-168-5">D25-10</option>
+            <option value="30-10-168-2">D30-10</option>
+<!--             <option value="35-10-168-5">D35-10</option>
+            <option value="40-10-168-3">D40-10</option>
+            <option value="75-20-168-2">D75-20</option>
+            <option value="90-20-168-1">D90-20</option>
+            <option value="100-25-168-3">D100-25</option> -->
+          </select>
+        </div>
+      </div>
+
+ 
+  <div id="berths"></div>
+</div>
+
+    <!-- Right Panel -->
+    <div class="arrivals-panel">
+      <div class="arrivals-header">
+        <h3>Expected Arrivals</h3>
+
+        <!-- wrapper για το info κουμπί + tooltip -->
+        <!-- <div class="info-wrap"> -->
+          <button class="info-btn" id="infoArrivals">i</button>
+
+          <!-- tooltip που θα εμφανίζεται/εξαφανίζεται -->
+          <div id="arrivalsTooltip" class="info-tooltip" role="dialog" aria-hidden="true">
+            <strong>Ιnfo</strong>
+            <div style="margin-top:6px; font-size:16px; line-height:1.3;">
+              <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;">Arrivals Info</strong> <br>
+                📌 In "Expected Arrivals'" column, after selecting a scenario and an algorithm,
+                will be shown on the screen, sorted from top to bottom according
+                to their arrival time.<br>
+              <br>
+              <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;"> Port Panel Info</strong> <br>
+                📌 After selecting a scenario and an algorithm, by pressing the ‘Display’ 
+                button, all scheduled vessels from the arrivals' column will be allocated to a berth.   <br>
+                📌 Ever berth is represented by a box, showing its full schedule. <br> 
+                📌 When a berth remains empty after all assignments, will be marked as red.<br>
+                📌 You can always move your cursor at a vessel on that schedule, to see the mooring details or click on it to see vessel's details at arrivals column.
+            </div>
+          </div>
+        <!-- </div> -->
+      </div>
+      <div id="ships">
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
