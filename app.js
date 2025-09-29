@@ -297,7 +297,6 @@ document.getElementById("addVesselBtn").addEventListener("click", () => {
 
   if (scenario === "20-10-168-1"){
 
-    alert("you are beautiful");
     
     let new_scenario = "21-10-168-1";
     
@@ -578,3 +577,4 @@ function renderShipsWithNewShip(ships, newShipId) {
       container.appendChild(shipDiv);
     });
 }
+
