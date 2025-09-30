@@ -290,25 +290,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-document.getElementById("addVesselBtn").addEventListener("click", () => {
-  const algo = getSelectedAlgorithm();
-  const scenario = getSelectedScenario();
-
-  if (scenario === "20-10-168-1"){
-
-    
-    let new_scenario = "21-10-168-1";
-    
+function added_scenario(scenario, new_scenario, algo, ship_added){
     shipFile = `Datasets/${new_scenario}-ships.csv` ;
     berthFile = `Datasets/${new_scenario}-berths.csv`;
-    // populateShips(shipFile)
+
     //PopulateShips for adding a vessel.
     Papa.parse(shipFile, {
       download: true,
       header: true,
       complete: (results) => {
-        renderShipsWithNewShip(results.data,12);
+        renderShipsWithNewShip(results.data,ship_added);
       }
     });
     
@@ -321,20 +312,40 @@ document.getElementById("addVesselBtn").addEventListener("click", () => {
 
     console.log(old_solution); console.log(new_solution);
 
-    compareSchedules(old_solution, new_solution, 12, (changes) => {
+    compareSchedules(old_solution, new_solution, ship_added, (changes) => {
       // Store it in an object
       changedShipsStore = {
-        newShipId: 12,
+        newShipId: ship_added,
         changes: changes
       };
 
       console.log("Stored changed ships:", changedShipsStore);
       renderSolutionOverlayWithChanges(
         new_solution,
-        changedShipsStore.changes // array of ships that changed
+        changedShipsStore.changes, // array of ships that changed
+        "berths",
+        ship_added
       );
-    });
+    });}
 
+
+document.getElementById("addVesselBtn").addEventListener("click", () => {
+  const algo = getSelectedAlgorithm();
+  const scenario = getSelectedScenario();
+
+  if (scenario === "20-10-168-1"){
+    let new_scenario = "21-10-168-1";
+    added_scenario(scenario, new_scenario, algo, 12);
+
+  }
+  else if (scenario === "25-10-168-5"){
+    let new_scenario = "26-10-168-1";
+    added_scenario(scenario,new_scenario, algo, 9);
+
+  }
+  else{
+    let new_scenario = "31-10-168-2";
+    added_scenario(scenario,new_scenario, algo, 4);
   }
 });
 
@@ -394,7 +405,7 @@ function compareSchedules(oldCsvFile, newCsvFile, new_ship, callback) {
 }
 
 
-function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], containerId = "berths") {
+function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], containerId = "berths", new_ship) {
   Papa.parse(solutionFile, {
     download: true,
     header: true,
@@ -437,7 +448,9 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
         const shipId = Number(ship.Ship);
         if (!Number.isFinite(shipId)) return; // skip invalid ships
 
-        if (shipId > 12) {
+        const new_ship_id = Number(new_ship);
+
+        if (shipId > new_ship_id) { //12
           chip.textContent = "S" + String(shipId - 1).padStart(2, "0");
         }
 
@@ -472,10 +485,10 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
 
 
 
-        if (shipId > 12) {
+        if (shipId > new_ship_id) {
           tooltip.textContent = "S" + String(Number(ship.Ship) - 1).padStart(2, "0") + " ---> Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
         }
-        else if (shipId == 12){
+        else if (shipId == new_ship_id){
             tooltip.textContent = "S new" + " ---> Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
         }
 
@@ -577,4 +590,3 @@ function renderShipsWithNewShip(ships, newShipId) {
       container.appendChild(shipDiv);
     });
 }
-
