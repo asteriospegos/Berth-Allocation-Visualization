@@ -151,8 +151,6 @@ function renderSolutionOverlay(solutionFile, containerId = "berths") {
         tooltip.textContent = `S${ship.Ship.padStart(2, "0")}: Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;
         document.body.appendChild(tooltip);   // ✅ instead of track.appendChild
 
-        //track.appendChild(tooltip);
-
         chip.addEventListener("click", () => {
           const target = document.getElementById("ship-" + ship.Ship.padStart(2, "0"));
           if (target) {
@@ -540,9 +538,6 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
         const departure = parseFloat(ship.MooringTime) + parseFloat(ship.HandlingTime);
         tooltip.textContent = `S${ship.Ship.padStart(2, "0")}: Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;        
         
-        // if ( changedShip && changedShip.type === "shifted")
-
-
 
         if (shipId > new_ship_id) {
           tooltip.textContent = "S" + String(Number(ship.Ship) - 1).padStart(2, "0") + ": Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
@@ -551,8 +546,7 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
             tooltip.textContent = "S new: Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
         }
 
-
-        track.appendChild(tooltip);
+        document.body.appendChild(tooltip);   
 
         chip.addEventListener("click", () => {
           const target = document.getElementById("ship-" + ship.Ship.padStart(2, "0"));
@@ -569,11 +563,13 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
         });
 
         chip.addEventListener("mouseenter", () => {
+          const chipRect = chip.getBoundingClientRect();
           tooltip.style.opacity = 1;
-          tooltip.style.left = (chip.offsetLeft + chip.offsetWidth / 2) + "px";
-          tooltip.style.top = (chip.offsetTop - 25) + "px";
+          tooltip.style.top = (window.scrollY + chipRect.top - 15) + "px";   // above chip
+          tooltip.style.left = (window.scrollX + chipRect.left + chipRect.width / 2) + "px";
           tooltip.style.transform = "translateX(-50%)";
         });
+
 
         chip.addEventListener("mouseleave", () => {
           tooltip.style.opacity = 0;
@@ -674,11 +670,11 @@ const times_and_gaps = {
       obj: 880
     },
     insertion: {
-      time: 0.00006,
+      time: 0.00002,
       obj: 836
     },
     qd_insertion: {
-      time: 0.00002,
+      time: 0.00001,
       obj: 836
     },
     csa: {
