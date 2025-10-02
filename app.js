@@ -116,6 +116,8 @@ function renderSolutionOverlay(solutionFile, containerId = "berths") {
       // Determine max time across all ships
       const maxTime = Math.max(...ships.map(s => parseFloat(s.MooringTime) + parseFloat(s.HandlingTime)));
 
+      renderTimeAxis(maxTime);
+      
       ships.forEach(ship => {
         // Find the existing berth track
         const berthDiv = Array.from(container.children).find(
@@ -146,8 +148,10 @@ function renderSolutionOverlay(solutionFile, containerId = "berths") {
         const tooltip = document.createElement("div");
         tooltip.className = "ship-tooltip";
         const departure = parseFloat(ship.MooringTime) + parseFloat(ship.HandlingTime);
-        tooltip.textContent = `S${ship.Ship.padStart(2, "0")} ---> Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;
-        track.appendChild(tooltip);
+        tooltip.textContent = `S${ship.Ship.padStart(2, "0")}: Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;
+        document.body.appendChild(tooltip);   // ✅ instead of track.appendChild
+
+        //track.appendChild(tooltip);
 
         chip.addEventListener("click", () => {
           const target = document.getElementById("ship-" + ship.Ship.padStart(2, "0"));
@@ -161,23 +165,48 @@ function renderSolutionOverlay(solutionFile, containerId = "berths") {
           }
         });
 
-        // Hover events
         chip.addEventListener("mouseenter", () => {
-          tooltip.style.opacity = 1;
-          // Position above the chip
           const chipRect = chip.getBoundingClientRect();
-          const trackRect = track.getBoundingClientRect();
-          tooltip.style.left = (chip.offsetLeft + chip.offsetWidth / 2) + "px";
-          tooltip.style.top = (chip.offsetTop - 25) + "px";
+          tooltip.style.opacity = 1;
+          tooltip.style.top = (window.scrollY + chipRect.top - 15) + "px";   // above chip
+          tooltip.style.left = (window.scrollX + chipRect.left + chipRect.width / 2) + "px";
           tooltip.style.transform = "translateX(-50%)";
         });
 
-        chip.addEventListener("mouseleave", () => {
-          tooltip.style.opacity = 0;
-        });
+      chip.addEventListener("mouseleave", () => {
+        tooltip.style.opacity = 0;
+      });
+
 
         track.appendChild(chip);
       });
+
+      const scenario = getSelectedScenario();
+      const algo = getSelectedAlgorithm();
+      if (algo != "exact"){
+
+        const gapPercent = `${((times_and_gaps[scenario][algo]["obj"] - times_and_gaps[scenario]["exact"]["obj"]) 
+         / times_and_gaps[scenario]["exact"]["obj"] * 100).toFixed(2)}%`;
+
+        document.getElementById('heuristicRuntime').innerHTML = times_and_gaps[scenario][algo]["time"] + "s";
+        document.getElementById('heuristicObjValue').innerHTML = times_and_gaps[scenario][algo]["obj"];
+        document.getElementById("heuristicGap").innerHTML = gapPercent;        
+        document.getElementById('exactRuntime').innerHTML = times_and_gaps[scenario]["exact"]["time"] + "s";
+        document.getElementById('exactObjVal').innerHTML = times_and_gaps[scenario]["exact"]["obj"];
+    
+        document.querySelectorAll('.info-block-exact').forEach(element => element.style.visibility = "visible");
+        document.querySelectorAll('.info-block-heuristic').forEach(element => element.style.visibility = "visible");     
+      }
+      else{
+        document.querySelectorAll('.info-block-heuristic').forEach(element => element.style.visibility = "hidden");
+        document.getElementById('exactRuntime').innerHTML = times_and_gaps[scenario]["exact"]["time"] + "s";
+        document.getElementById('exactObjVal').innerHTML = times_and_gaps[scenario]["exact"]["obj"];   
+        document.querySelectorAll('.info-block-exact').forEach(element => element.style.visibility = "visible");     
+      }
+
+      
+
+
 
       // Mark berths with no ships
       Array.from(container.children).forEach(berthDiv => {
@@ -215,13 +244,43 @@ document.getElementById("runBtn").addEventListener("click", () => {
   const scenario = getSelectedScenario();
   shipFile = `Datasets/${scenario}-ships.csv` ;
   berthFile = `Datasets/${scenario}-berths.csv`;
-  populateShips(shipFile)
+  populateShips(shipFile);
   populateBerths(berthFile);
 
   renderSolutionOverlay(`Datasets/${scenario}-${algo}-solution.csv`);
+
+
+
 });
 
+function renderTimeAxis(maxTime, ticks = 10) {
+  let axis = document.getElementById("time-axis");
 
+  // If it doesn't exist yet, create and place it in the right spot
+  if (!axis) {
+    axis = document.createElement("div");
+    axis.id = "time-axis";
+
+    // Find parent (port-panel) and insert before berths-wrapper
+    const panel = document.querySelector(".port-panel");
+    const wrapper = document.querySelector(".berths-wrapper");
+    panel.insertBefore(axis, wrapper); // 👈 puts axis exactly where you had it commented
+  }
+
+  // Clear old ticks
+  axis.innerHTML = "";
+
+  const axisWidth = axis.offsetWidth;
+
+  for (let i = 0; i <= ticks; i++) {
+    const time = Math.round((i / ticks) * maxTime);
+    const tick = document.createElement("div");
+    tick.className = "time-tick";
+    tick.style.left = `${(i / ticks) * 100}%`;
+    tick.textContent = time;
+    axis.appendChild(tick);
+  }
+}
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -330,21 +389,19 @@ function added_scenario(scenario, new_scenario, algo, ship_added){
 
 
 document.getElementById("addVesselBtn").addEventListener("click", () => {
+
   const algo = getSelectedAlgorithm();
   const scenario = getSelectedScenario();
 
-  if (scenario === "20-10-168-1"){
-    let new_scenario = "21-10-168-1";
-    added_scenario(scenario, new_scenario, algo, 12);
+  let new_scenario = add_one_scenario[scenario];
 
+  if (scenario === "20-10-168-1"){
+    added_scenario(scenario, new_scenario, algo, 12);
   }
   else if (scenario === "25-10-168-5"){
-    let new_scenario = "26-10-168-1";
     added_scenario(scenario,new_scenario, algo, 9);
-
   }
   else{
-    let new_scenario = "31-10-168-2";
     added_scenario(scenario,new_scenario, algo, 4);
   }
 });
@@ -426,6 +483,8 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
 
       const maxTime = Math.max(...ships.map(s => parseFloat(s.MooringTime) + parseFloat(s.HandlingTime)));
 
+      renderTimeAxis(maxTime);
+      
       ships.forEach(ship => {
         const berthDiv = Array.from(container.children).find(
           b => b.querySelector(".berth-name")?.textContent === "B-" + ship.Berth.padStart(2, "0")
@@ -479,17 +538,17 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
         const tooltip = document.createElement("div");
         tooltip.className = "ship-tooltip";
         const departure = parseFloat(ship.MooringTime) + parseFloat(ship.HandlingTime);
-        tooltip.textContent = `S${ship.Ship.padStart(2, "0")} ---> Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;        
+        tooltip.textContent = `S${ship.Ship.padStart(2, "0")}: Mooring: ${ship.MooringTime}, Handling: ${Math.round(ship.HandlingTime)}, Departure: ${departure}`;        
         
         // if ( changedShip && changedShip.type === "shifted")
 
 
 
         if (shipId > new_ship_id) {
-          tooltip.textContent = "S" + String(Number(ship.Ship) - 1).padStart(2, "0") + " ---> Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
+          tooltip.textContent = "S" + String(Number(ship.Ship) - 1).padStart(2, "0") + ": Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
         }
         else if (shipId == new_ship_id){
-            tooltip.textContent = "S new" + " ---> Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
+            tooltip.textContent = "S new: Mooring: " + ship.MooringTime + ", Handling: " + Math.round(ship.HandlingTime) + ", Departure: " + departure;
         }
 
 
@@ -522,6 +581,18 @@ function renderSolutionOverlayWithChanges(solutionFile, changedShips = [], conta
 
         track.appendChild(chip);
       });
+    
+
+      const scenario =  add_one_scenario[getSelectedScenario()];
+      const algo = getSelectedAlgorithm();
+      
+      document.getElementById('heuristicRuntime').innerHTML = times_and_gaps[scenario][algo]["time"] + "s";
+      document.getElementById('heuristicObjValue').innerHTML = times_and_gaps[scenario][algo]["obj"];
+      document.getElementById("heuristicGap").innerHTML = "--%";
+  
+      document.querySelectorAll('.info-block-exact').forEach(element => element.style.visibility = "hidden");
+      document.querySelectorAll('.info-block-heuristic').forEach(element => element.style.visibility = "visible");     
+      
 
       // Mark empty berths
       Array.from(container.children).forEach(berthDiv => {
@@ -590,3 +661,194 @@ function renderShipsWithNewShip(ships, newShipId) {
       container.appendChild(shipDiv);
     });
 }
+
+
+const times_and_gaps = {
+  "20-10-168-1": {
+    exact: {
+      time: 4,
+      obj: 784
+    },
+    nn: {
+      time: 0.00001,
+      obj: 880
+    },
+    insertion: {
+      time: 0.00006,
+      obj: 836
+    },
+    qd_insertion: {
+      time: 0.00002,
+      obj: 836
+    },
+    csa: {
+      time: 0.1,
+      obj: 799
+    },
+    ga: {
+      time: 0.03,
+      obj: 793
+    },
+    alns: {
+      time: 0.02,
+      obj: 784
+    }
+  },
+  "25-10-168-5": {
+    exact: {
+      time: 14,
+      obj: 718
+    },
+    nn: {
+      time: 0.00001,
+      obj: 880
+    },
+    insertion: {
+      time: 0.00009 ,
+      obj: 744 
+    },
+    qd_insertion: {
+      time: 0.00002,
+      obj: 758 
+    },
+    csa: {
+      time: 0.12,
+      obj: 742 
+    },
+    ga: {
+      time: 0.047  ,
+      obj: 744
+    },
+    alns: {
+      time: 0.039 ,
+      obj: 732 
+    }
+  },
+  "30-10-168-2": {
+    exact: {
+      time: 26.26,
+      obj: 886
+    },
+    nn: {
+      time: 0.00001,
+      obj: 1035 
+    },
+    insertion: {
+      time: 0.00011 ,
+      obj: 944
+    },
+    qd_insertion: {
+      time: 0.00002,
+      obj: 944
+    },
+    csa: {
+      time: 0.23  ,
+      obj: 893
+    },
+    ga: {
+      time: 0.064 ,
+      obj: 944 
+    },
+    alns: {
+      time: 0.059 ,
+      obj: 886
+    }
+  },
+  "21-10-168-1":{
+    exact: {
+      time: 0,
+      obj: 0
+    },
+    nn: {
+      time: 0.00001,
+      obj: 951
+    },
+    insertion: {
+      time: 0.00002,
+      obj: 849
+    },
+    qd_insertion: {
+      time: 0.00001,
+      obj: 849
+    },
+    csa: {
+      time: 0.11,
+      obj: 812
+    },
+    ga: {
+      time: 0.037,
+      obj: 812
+    },
+    alns: {
+      time: 0.02,
+      obj: 797
+    } 
+  },
+  "26-10-168-5":{
+    exact: {
+      time: 0,
+      obj: 0
+    },
+    nn: {
+      time: 0.00001,
+      obj: 910
+    },
+    insertion: {
+      time: 0.00013,
+      obj: 771
+    },
+    qd_insertion: {
+      time: 0.00002,
+      obj: 785
+    },
+    csa: {
+      time: 0.12545,
+      obj: 771
+    },
+    ga: {
+      time: 0.048,
+      obj: 771
+    },
+    alns: {
+      time: 0.043,
+      obj: 762
+    } 
+  },
+  "31-10-168-2": {
+    exact: {
+      time: 0,
+      obj: 0
+    },
+    nn: {
+      time: 0.00001,
+      obj: 1165
+    },
+    insertion: {
+      time: 0.00011,
+      obj: 1023
+    },
+    qd_insertion: {
+      time: 0.00002,
+      obj: 1023
+    },
+    csa: {
+      time: 0.24,
+      obj: 997
+    },
+    ga: {
+      time: 0.067,
+      obj: 997
+    },
+    alns: {
+      time: 0.059,
+      obj: 965
+    }
+  }  
+};
+
+add_one_scenario = {
+  "20-10-168-1": "21-10-168-1",
+  "25-10-168-5": "26-10-168-5",
+  "30-10-168-2": "31-10-168-2"
+}
+

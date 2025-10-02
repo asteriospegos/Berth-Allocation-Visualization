@@ -5,6 +5,7 @@
   <title>Berth Allocation & Scheduling Visualizer</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
   <h1>Berth Allocation & Scheduling Visualizer</h1>
@@ -15,12 +16,19 @@
       <div class="toolbar">
         <!-- Left side -->
         <div class="toolbar-left">
+           <select id="scenarioSelect">
+            <option >Scenario</option>
+            <option value="20-10-168-1">D20-10</option>
+            <option value="25-10-168-5">D25-10</option>
+            <option value="30-10-168-2">D30-10</option>
+          </select>
+
           <select id="algSelect">
-            <option >---Select Algorithm---</option>
-            <option value="exact">Exact Model</option>
-            <option value="nn">Nearest Neighbour</option>
-            <option value="insertion">Insertion</option>
-            <option value="qd_insertion">Q&D-Insertion</option>
+            <option >Algorithm</option>
+            <option value="exact">Exact</option>
+            <option value="nn">NN</option>
+            <option value="insertion">INS</option>
+            <option value="qd_insertion">QD-INS</option>
             <option value="csa">CSA</option>
             <option value="ga">GA</option>
             <option value="alns">ALNS</option>
@@ -28,56 +36,84 @@
           <button id="runBtn">Display</button>
           <button id="addVesselBtn"> Add Vessel</button>
         </div>
-
-        <!-- Right side -->
         <div class="toolbar-right">
-          <select id="scenarioSelect">
-            <option >---Select Scenario---</option>
-            <option value="20-10-168-1">D20-10</option>
-            <option value="25-10-168-5">D25-10</option>
-            <option value="30-10-168-2">D30-10</option>
-<!--             <option value="35-10-168-5">D35-10</option>
-            <option value="40-10-168-3">D40-10</option>
-            <option value="75-20-168-2">D75-20</option>
-            <option value="90-20-168-1">D90-20</option>
-            <option value="100-25-168-3">D100-25</option> -->
-          </select>
-        </div>
+            <div id="solver-info">
+
+              <!-- Exact Solver -->
+              <div class="info-block-exact">
+                <label>Exact</label>
+                <span class="info-value" id="exactRuntime"></span>
+              </div>
+
+              <div class="info-block-exact">
+                <label>Exact Obj</label>
+                <span class="info-value" id="exactObjVal"></span>
+              </div>
+
+              <div class="info-block-heuristic">
+                <label>Heuristic</label>
+                <span class="info-value" id="heuristicRuntime"></span>
+              </div>
+
+              <div class="info-block-heuristic">
+                <label>Heuristic Obj</label>
+                <span class="info-value" id="heuristicObjValue"></span>
+              </div>
+
+              <div class="info-block-heuristic">
+                <label>Gap</label>
+                <span class="info-value" id="heuristicGap"></span>
+              </div>
+
+            </div>
+          </div>
+        
+
       </div>
 
- 
-  <div id="berths"></div>
-</div>
+
+
+
+      <!-- <div id="time-axis"></div> -->
+      <div class = "berths-wrapper">
+        <div id="berths"></div>
+      </div>
+    </div>
 
     <!-- Right Panel -->
     <div class="arrivals-panel">
       <div class="arrivals-header">
         <h3>Expected Arrivals</h3>
-
-        <!-- wrapper για το info κουμπί + tooltip -->
-        <!-- <div class="info-wrap"> -->
-          <button class="info-btn" id="infoArrivals">i</button>
-
-          <!-- tooltip που θα εμφανίζεται/εξαφανίζεται -->
-          <div id="arrivalsTooltip" class="info-tooltip" role="dialog" aria-hidden="true">
-            <strong>Ιnfo</strong>
-            <div style="margin-top:6px; font-size:16px; line-height:1.3;">
-              <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;">Arrivals Info</strong> <br>
-                📌 In "Expected Arrivals'" column, after selecting a scenario and an algorithm,
-                will be shown on the screen, sorted from top to bottom according
-                to their arrival time.<br>
-              <br>
-              <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;"> Port Panel Info</strong> <br>
-                📌 After selecting a scenario and an algorithm, by pressing the ‘Display’ 
-                button, all scheduled vessels from the arrivals' column will be allocated to a berth.   <br>
-                📌 Ever berth is represented by a box, showing its full schedule. <br> 
-                📌 When a berth remains empty after all assignments, will be marked as red.<br>
-                📌 You can always move your cursor at a vessel on that schedule, to see the mooring details or click on it to see vessel's details at arrivals column.
-            </div>
-          </div>
-        <!-- </div> -->
+        <button class="info-btn" id="infoArrivals">i</button>
       </div>
       <div id="ships">
+      </div>
+    </div>
+
+
+    <div id="arrivalsTooltip" class="info-tooltip" role="dialog" aria-hidden="true">
+      <strong>Ιnfo</strong>
+      <div style="margin-top:6px; font-size:16px; line-height:1.3;">
+        <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;">Arrivals Info</strong> <br>
+          📌 In "Expected Arrivals'" column, after selecting a scenario and an algorithm,
+          will be shown on the screen, sorted from top to bottom according
+          to their arrival time.<br>
+        <br>
+        <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;"> Port Panel Info</strong> <br>
+          📌 After selecting a scenario and an algorithm, by pressing the ‘Display’ 
+          button, all scheduled vessels from the arrivals' column will be allocated to a berth.   <br>
+          📌 Ever berth is represented by a box, showing its full schedule. <br> 
+          📌 When a berth remains empty after all assignments, will be marked as red.<br>
+          📌 You can always move your cursor at a vessel on that schedule, to see the mooring details or click on it to see vessel's details at arrivals column.<br>
+          📌 Clicking "Add Vessel" adds a new vessel named *NEW* to the schedule, whose details are highlighted in orange in the arrivals panel. In the berth allocation and scheduling panel, all vessels affected by the addition of this new vessel are also marked in orange.<br>
+          <br>
+        <strong style="margin-top:6px; font-size:18px; line-height:1.3; margin-bottom: 6px;">Metrics Info</strong> <br>
+          📌 With gap, we indicate the deviation of the heuristic solution from the exact one based on the objective value:<br>
+          <span style="font-size: 0.8em;">
+              \( \text{gap} = \dfrac{\text{HeurObjVal} - \text{OptObjVal}}{\text{OptObjVal}} \times 100\% \)
+          </span>
+
+        <br>
       </div>
     </div>
   </div>
@@ -85,3 +121,5 @@
   <script src="app.js"></script>
 </body>
 </html>
+
+

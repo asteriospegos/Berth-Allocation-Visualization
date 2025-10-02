@@ -29,6 +29,8 @@ h3 {
   margin-right: 50px;
   flex: 1;              /* πιάνει όλο το υπόλοιπο ύψος */
   min-height: 0;        /* fix για flexbox scroll */
+  overflow-y: auto;
+  height: auto;
 }
 
 .port-panel {
@@ -36,11 +38,12 @@ h3 {
   border: 1px solid #0dada9;
   border-radius: 15px;
   padding: 15px;
-  flex: 9;              /* 9/11 πλάτος */
+  padding-top: 1px;
+  flex: 9;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;     /* scroll μόνο εδώ */
-  min-height: 0;
+  min-height: 0;        /* για flex fix */
+  overflow: hidden;     /* ❌ no scroll εδώ */
 }
 
 .arrivals-panel {
@@ -102,17 +105,22 @@ h3 {
   padding: 15px 20px;
   font-size: 20px;
   line-height: 1.6;
-  max-width: calc(100% - 50px); /* relative to parents (arrivals-panel) width */
+  margin-right:5%;
+  margin-top: 5%;
+  width:  40%;
+  height: 40%; /*uto; */
   z-index: 9999;
   pointer-events: auto;
   opacity: 0;
   transform-origin: top right;
-  transform: translateY(-6px) scale(0.98);
+  transform: translate(-100000px) scale(0.98);
   transition: opacity 0.2s ease, transform 0.2s ease;
   box-shadow: 0 8px 24px rgba(0,0,0,0.55);
   visibility: hidden;
   text-align: left;
   overflow-wrap: break-word; /* τυλίγει λέξεις όταν χρειάζεται */
+  overflow-y: auto;
+
 }
 
 /* visible state */
@@ -124,29 +132,52 @@ h3 {
 
 /* Γενικός κανόνας για τα panels με scroll */
 .port-panel::-webkit-scrollbar,
-.arrivals-panel::-webkit-scrollbar {
+.arrivals-panel::-webkit-scrollbar,
+{
   width: 15px;               /* πάχος scrollbar */
 }
 
 .port-panel::-webkit-scrollbar-track,
-.arrivals-panel::-webkit-scrollbar-track {
+.arrivals-panel::-webkit-scrollbar-track,
+{
   background: #16171f;       /* background του track */
   border-radius: 15px;
 }
 
 .port-panel::-webkit-scrollbar-thumb,
-.arrivals-panel::-webkit-scrollbar-thumb {
+.arrivals-panel::-webkit-scrollbar-thumb,
+{
   background: #0dada9;       /* χρώμα "σύρματος" scrollbar */
   border-radius: 15px;
   border: 3px solid #2f3038; /* δίνει λίγο padding/outline effect */
 }
 
 .port-panel::-webkit-scrollbar-thumb:hover,
-.arrivals-panel::-webkit-scrollbar-thumb:hover {
+.arrivals-panel::-webkit-scrollbar-thumb:hover,
+{
   background: #08c9c4;       /* ελαφρώς φωτεινότερο neon όταν hover */
 }
 
-/* Firefox */
+/* Tooltip scrollbar */
+.info-tooltip::-webkit-scrollbar {
+  width: 4px; /* thinner than panels */
+}
+
+.info-tooltip::-webkit-scrollbar-track {
+  background: #16171f;
+  border-radius: 15px;
+}
+
+.info-tooltip::-webkit-scrollbar-thumb {
+  background: #0dada9;
+  border-radius: 10px;
+}
+
+.info-tooltip::-webkit-scrollbar-thumb:hover {
+  background: #11cfcf;
+}
+
+
 .port-panel,
 .arrivals-panel {
   scrollbar-width: thin;
@@ -155,7 +186,7 @@ h3 {
 
 .toolbar {
   display: flex;
-  justify-content: space-between; /* Left & right groups στις γωνίες */
+  justify-content: space-start; /* Left & right groups στις γωνίες */
   align-items: center;
   margin-bottom: 15px;
   border-radius: 12px;
@@ -172,12 +203,16 @@ h3 {
   font-size: 20px;
 }
 
+.toolbar-right{
+  margin-left:40px;
+}
+
 .toolbar select,
 .toolbar button {
   background: #2f3038;
   border: 1px solid #0dada9;
   border-radius: 8px;
-  padding: 8px 14px;  /* λίγο μεγαλύτερο */
+  padding: 5px;/*8px 14px;  /* λίγο μεγαλύτερο */
   color: #e0e0e0;
   font-family: Comfortaa, sans-serif;
   font-size: 18px;
@@ -196,6 +231,13 @@ h3 {
   flex-direction: column;
   gap: 10px;
 
+}
+
+.berths-wrapper {
+  flex: 1;
+  overflow-y: auto;     /* ✅ scroll μόνο εδώ */
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 .berth {
@@ -326,7 +368,8 @@ h3 {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s;
-  z-index: 10;
+  z-index: 9999;
+/*  overflow-x: auto;*/
 }
 
 
@@ -396,3 +439,70 @@ h3 {
   opacity: 0.5;         /* makes it look faded */
   cursor: not-allowed;  /* shows the "not allowed" cursor */
 }
+
+#time-axis {
+  position: relative;
+  height: 10px;
+  margin-bottom: 10px;
+  margin-left: 110px;
+  margin-right: 25px;
+  border-bottom: 1px solid #0dada9;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: Comfortaa, sans-serif;
+  color: #0dada9;
+}
+
+.time-tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.time-tick::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 10px;
+  width: 1px;
+  background-color: #0dada9;
+}
+
+#solver-info {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.info-block-exact, .info-block-heuristic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  visibility: hidden;
+
+}
+
+.info-block-exact label, .info-block-heuristic label {
+  font-size: 18px;
+  color: #0dada9;
+  font-family: Comfortaa, sans-serif;
+  margin-bottom: 3px;
+}
+
+
+.info-value {
+  display: block;
+  padding: 4px 8px;
+  /*border: 1px solid #0dada9;*/
+  /*border-radius: 6px;*/
+  background: #2f3038;
+  color: #ffffff;
+  font-family: Comfortaa, sans-serif;
+  font-size: 18px;
+  text-align: center;
+  width: 50px;
+}
+
